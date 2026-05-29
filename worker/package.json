@@ -1,0 +1,14 @@
+{
+  "name": "mtc-api",
+  "version": "1.0.0",
+  "description": "MTC Chain 백엔드 API — Cloudflare Workers + KV",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^3.80.0"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "mtc-chain",
+  "version": "1.0.0",
+  "description": "강재 자재 이력 시스템 (MTC on Blockchain) — Hardhat 컨트랙트 레이어",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "test:access": "hardhat test test/MtcRegistry.access.test.js",
+    "test:issue": "hardhat test test/MtcRegistry.issueMtc.test.js",
+    "test:transfer": "hardhat test test/MtcRegistry.transfer.test.js",
+    "test:split": "hardhat test test/MtcRegistry.split.test.js",
+    "test:combine": "hardhat test test/MtcRegistry.combine.test.js",
+    "test:usage": "hardhat test test/MtcRegistry.usage.test.js",
+    "test:query": "hardhat test test/MtcRegistry.query.test.js",
+    "node": "hardhat node",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "demo": "hardhat run scripts/demo.js --network localhost"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.0"
+  }
+}
