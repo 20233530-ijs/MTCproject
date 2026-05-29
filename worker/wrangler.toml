@@ -22,7 +22,7 @@ preview_id = "a053598aee744c9ba5aad94c6e728b8e"
 #   WORKERS_API_KEY=local-dev-key
 #   ALLOWED_ORIGIN=http://localhost:5173
 [vars]
-ALLOWED_ORIGIN = ""
+ALLOWED_ORIGIN = "https://mtc-chain.pages.dev"
 
 # ── 배포 후 시크릿 설정 (터미널에서 실행) ────────────────────────────────────
 # wrangler secret put WORKERS_API_KEY
