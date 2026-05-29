@@ -1,0 +1,11 @@
+# Cloudflare Workers 로컬 개발 환경변수
+# 이 파일을 .dev.vars 로 복사하여 사용하세요.
+# .dev.vars 는 .gitignore에 포함됩니다.
+
+# POST 엔드포인트 인증 키 (로컬 개발용 — 임의 문자열 사용 가능)
+WORKERS_API_KEY=local-dev-key
+
+# 허용할 CORS origin (프론트엔드 개발 서버 주소)
+# 로컬: http://localhost:5173
+# 미설정 시 * (와일드카드) 적용
+ALLOWED_ORIGIN=http://localhost:5173

@@ -22,6 +22,7 @@ typechain-types/
 
 # Cloudflare
 .wrangler/
+.dev.vars
 
 # IDE / OS
 .vscode/

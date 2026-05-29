@@ -3,17 +3,27 @@ main = "src/index.js"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 
-# KV 네임스페이스 바인딩 (Cloudflare 대시보드에서 생성 후 ID 교체)
+# ── KV 네임스페이스 바인딩 ────────────────────────────────────────────────────
+# 배포 전 준비:
+#   1. Cloudflare 대시보드 → Workers & Pages → KV → "Create a namespace"
+#      이름: MTC_METADATA
+#   2. 생성된 namespace ID를 아래 id 필드에 붙여넣기
+#   3. preview_id는 로컬 wrangler dev용 — 동일한 ID 사용 가능
 [[kv_namespaces]]
 binding = "MTC_METADATA"
-id = "PLACEHOLDER_KV_NAMESPACE_ID"
-preview_id = "PLACEHOLDER_KV_PREVIEW_ID"
+id = "a053598aee744c9ba5aad94c6e728b8e"
+preview_id = "a053598aee744c9ba5aad94c6e728b8e"
 
-# 환경변수 (Cloudflare 대시보드 또는 wrangler secret으로 설정)
-# [vars]
-# WORKERS_API_KEY = "PLACEHOLDER"  # 실제 키는 wrangler secret put 사용
+# ── 환경변수 ──────────────────────────────────────────────────────────────────
+# ALLOWED_ORIGIN: 프론트엔드 도메인 (예: https://mtc.pages.dev)
+# WORKERS_API_KEY: POST 엔드포인트 인증키 — wrangler secret put 으로 설정 권장
+#
+# 로컬 개발 시 .dev.vars 파일에 작성:
+#   WORKERS_API_KEY=local-dev-key
+#   ALLOWED_ORIGIN=http://localhost:5173
+[vars]
+ALLOWED_ORIGIN = ""
 
-# 배포 라우트 (Cloudflare Pages와 동일 계정 사용)
-# routes = [
-#   { pattern = "mtc-api.your-account.workers.dev", zone_name = "" }
-# ]
+# ── 배포 후 시크릿 설정 (터미널에서 실행) ────────────────────────────────────
+# wrangler secret put WORKERS_API_KEY
+# → 프롬프트에 실제 키 입력 (환경변수로 노출되지 않음)

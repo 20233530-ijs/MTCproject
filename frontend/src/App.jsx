@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { WalletProvider } from "./contexts/WalletContext";
+import { TxProvider } from "./contexts/TxContext";
 import HomePage from "./pages/HomePage";
 import SearchPage from "./pages/SearchPage";
 import AdminPage from "./pages/AdminPage";
@@ -9,11 +11,13 @@ import UsagePage from "./pages/UsagePage";
 import TransferPage from "./pages/TransferPage";
 
 /**
- * 최상위 라우팅 컴포넌트
- * 화면설계서 §1 페이지 목록 기반 8개 경로 정의
+ * 최상위 라우팅 + Provider 트리
+ * WalletProvider → TxProvider → BrowserRouter
  */
 export default function App() {
   return (
+    <WalletProvider>
+      <TxProvider>
     <BrowserRouter>
       <Routes>
         {/* 공개 접근 */}
@@ -40,5 +44,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+      </TxProvider>
+    </WalletProvider>
   );
 }
