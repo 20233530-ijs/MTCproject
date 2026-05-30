@@ -25,10 +25,7 @@ export default function RoleSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef(null);
 
-  // Admin 아닌 경우 렌더하지 않음
-  if (!isAdmin) return null;
-
-  // 드롭다운 외부 클릭 시 닫기
+  // 드롭다운 외부 클릭 시 닫기 — early return 전에 호출해야 Hook 규칙 준수
   useEffect(() => {
     function onClickOutside(e) {
       if (ref.current && !ref.current.contains(e.target)) {
@@ -38,6 +35,9 @@ export default function RoleSwitcher() {
     if (isOpen) document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [isOpen]);
+
+  // Admin 아닌 경우 렌더하지 않음 — 모든 hook 호출 이후
+  if (!isAdmin) return null;
 
   const displayMode = selectedMode || "admin";
 
