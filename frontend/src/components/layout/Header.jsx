@@ -32,7 +32,7 @@ const NAV_ITEMS = [
 
 export default function Header() {
   const { account, isSepolia, isConnected, isConnecting, connect } = useWallet();
-  const { effectiveRole, isLoading } = useRole();
+  const { effectiveRole, isAdmin, isLoading } = useRole();
   const [copied, setCopied] = useState(false);
 
   function copyAddress() {
@@ -45,6 +45,7 @@ export default function Header() {
 
   function isNavAllowed(item) {
     if (!item.allowedRoles) return true;
+    if (isAdmin && !isLoading) return true; // Admin은 모든 탭에 접근 가능
     return item.allowedRoles.includes(effectiveRole);
   }
 

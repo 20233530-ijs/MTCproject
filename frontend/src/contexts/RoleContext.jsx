@@ -34,7 +34,8 @@ export function RoleProvider({ children }) {
     isFabricator: false,
     isIntegrator: false,
   });
-  const [isLoading, setIsLoading] = useState(false);
+  // true로 시작 — 첫 역할 조회가 끝나기 전까지 페이지 가드가 섣불리 리다이렉트하지 않도록
+  const [isLoading, setIsLoading] = useState(true);
 
   // selectedMode: localStorage에서 초기값 복원 (Admin 확인 전까지는 보류)
   const [selectedMode, setSelectedModeState] = useState(
@@ -45,6 +46,7 @@ export function RoleProvider({ children }) {
   useEffect(() => {
     if (!isConnected || !account || !readContract) {
       setRoles({ isAdmin: false, isMill: false, isFabricator: false, isIntegrator: false });
+      setIsLoading(false); // 미연결 상태는 조회할 것이 없으므로 즉시 완료
       return;
     }
 
