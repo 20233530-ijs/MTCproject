@@ -1,6 +1,9 @@
 /**
- * 강재 이력 트리 — search.html (Claude Design Batch 2) 스타일 적용
+ * 강재 이력 트리 — standalone HTML (Claude Design Batch 2) 스타일 완전 반영
  * 블록체인 로직(BFS, getSteel) 유지 / 시각 요소만 교체
+ *
+ * 노드: .tn-node-wrap + .tn-top + .tn-id + .tn-status + .tn-meta.w
+ * 엣지: split(회색), combine(주황 점선), used(회색) + 라벨
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -17,77 +20,35 @@ import { logQuery } from "../../utils/logger";
 
 const MAX_NODES = 30;
 
-// 상태 색상 (design token 원본)
-const STATUS_LEFT_COLOR = {
-  0: "#16a34a",   // ACTIVE
-  1: "#b45309",   // SPLIT
-  2: "#c2410c",   // COMBINED
-  3: "#6b7280",   // USED
-};
-const STATUS_BADGE_BG = {
-  0: "#ecfdf3", 1: "#fef7e6", 2: "#fff1e6", 3: "#f1f2f4",
-};
+// 상태 인덱스 → CSS 키 (standalone: 'active'|'split'|'combined'|'used')
+const STATUS_KEY  = ["active", "split", "combined", "used"];
 const STATUS_TEXT = { 0: "ACTIVE", 1: "SPLIT", 2: "COMBINED", 3: "USED" };
 
 const NODE_W = 176;
 const H_GAP  = 220;
 const V_GAP  = 130;
 
-// ── 커스텀 노드 — search.html .tnode 스타일 ──────────────────────────────────
+// ── 커스텀 노드 — standalone .tnode → .tn-node-wrap CSS 클래스 적용 ──────────
 function SteelNode({ data, selected }) {
   const statusN  = data.status ?? 3;
-  const leftColor = STATUS_LEFT_COLOR[statusN] ?? "#6b7280";
-  const badgeBg   = STATUS_BADGE_BG[statusN]   ?? "#f1f2f4";
-  const hStyle    = { background: "transparent", border: "none", width: 6, height: 6 };
+  const statusKey = STATUS_KEY[statusN] ?? "used";
+  const handleStyle = { background: "transparent", border: "none", width: 6, height: 6 };
 
   return (
-    <div style={{
-      width: `${NODE_W}px`,
-      background: "#ffffff",
-      border: selected ? "1.5px solid #0a0a0b" : "1.5px solid #e1e2e5",
-      borderLeft: selected ? "4px solid #0a0a0b" : `4px solid ${leftColor}`,
-      borderRadius: "8px",            /* --r-3 */
-      padding: "10px 12px",
-      boxShadow: selected
-        ? "0 0 0 2px #0a0a0b, 0 4px 12px rgba(10,10,11,0.06)"
-        : "0 1px 2px rgba(10,10,11,0.04)",   /* --shadow-sm */
-      cursor: "pointer",
-      boxSizing: "border-box",
-      userSelect: "none",
-      position: "relative",
-      transition: "box-shadow .12s ease",
-      fontFamily: "'Pretendard Variable', Pretendard, system-ui, sans-serif",
-    }}>
-      <Handle type="target" position={Position.Top}    style={hStyle} />
-      <Handle type="source" position={Position.Bottom} style={hStyle} />
+    <div className={`tn-node-wrap s-${statusKey}${selected ? " is-selected" : ""}`}>
+      <Handle type="target" position={Position.Top}    style={handleStyle} />
+      <Handle type="source" position={Position.Bottom} style={handleStyle} />
 
-      {/* .tn-top: ID + 상태 배지 */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-        <span style={{
-          fontFamily: "'JetBrains Mono', 'SF Mono', ui-monospace, monospace",
-          fontSize: "13px", fontWeight: 600,
-          color: "#0a0a0b",
-          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-          maxWidth: "108px",
-        }}>
-          {data.label}
-        </span>
-        {/* .tn-status */}
-        <span style={{
-          fontSize: "9px", fontWeight: 600, letterSpacing: "0.04em",
-          padding: "1px 6px", borderRadius: "999px",
-          background: badgeBg, color: leftColor, whiteSpace: "nowrap", flexShrink: 0,
-        }}>
-          {STATUS_TEXT[statusN] ?? "?"}
-        </span>
+      {/* .tn-top: ID (left) + 상태 배지 (right) */}
+      <div className="tn-top">
+        <span className="tn-id">{data.label}</span>
+        <span className="tn-status">{STATUS_TEXT[statusN] ?? "?"}</span>
       </div>
 
-      {/* .tn-meta: 등급 · 무게 */}
-      <div style={{ fontSize: "12px", color: "#4b5160", lineHeight: "16px" }}>
+      {/* .tn-meta: 등급 · 무게(.w bold mono) */}
+      <div className="tn-meta">
         {data.grade ? `${data.grade} · ` : ""}
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", color: "#0a0a0b", fontWeight: 500 }}>
-          {data.weightKg}
-        </span>
+        <span className="w">{data.weightKg}</span>
         {" kg"}
       </div>
     </div>
@@ -158,54 +119,75 @@ function calcPositions(nodeMap) {
 }
 
 // ── 엣지 스타일 계산 ───────────────────────────────────────────────────────────
+// standalone 기준:
+//   split  → gray solid (.tree-edge)         소스 노드 SPLIT
+//   combine → orange dashed (.tree-edge.combine)  타깃 노드 COMBINED
+//   used   → gray solid (.tree-edge)          타깃 노드 USED
+//   각 타입 첫 엣지에 라벨 추가
 function buildEdges(edgeList, nodeMap) {
-  const labeledSources = new Set();
-  const labeledTargets = new Set();
+  // 소스/타깃별 라벨 중복 방지
+  const labeledSrc = new Set();
+  const labeledTgt = new Set();
 
   return edgeList.map(({ source, target }) => {
     const srcStatus = Number(nodeMap.get(source)?.steel?.status ?? 3);
     const tgtStatus = Number(nodeMap.get(target)?.steel?.status ?? 3);
 
-    // COMBINED 노드를 향하는 엣지 → 점선 + 조합 색상
-    const isCombineEdge = tgtStatus === 2;
-    // SPLIT 노드에서 나오는 엣지
-    const isSplitEdge   = srcStatus === 1;
+    const isCombine = tgtStatus === 2;   // target: COMBINED → combine edge
+    const isSplit   = srcStatus === 1;   // source: SPLIT    → split edge
+    const isUsed    = tgtStatus === 3;   // target: USED     → used edge
 
-    // 엣지 라벨 (소스/타깃당 1회만)
+    // 라벨 생성 (타입당 첫 엣지만)
     let label      = undefined;
-    let labelStyle = { fontSize: 9, fontFamily: "'JetBrains Mono', monospace", fill: "#80868f" };
-    let labelBgStyle = { fill: "rgba(247,247,248,0.88)", fillOpacity: 0.88 };
+    let labelStyle = {
+      fontSize: 9,
+      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+      fill: "#80868f",      /* --text-tertiary */
+    };
+    let labelBgStyle = { fill: "rgba(247,247,248,0.90)", fillOpacity: 0.90 };
 
-    if (isSplitEdge && !labeledSources.has(source)) {
-      const childCount = edgeList.filter(e => e.source === source).length;
-      label = `분할 ×${childCount}`;
-      labeledSources.add(source);
-    } else if (isCombineEdge && !labeledTargets.has(target)) {
+    if (isCombine && !labeledTgt.has(target)) {
       label = "조합";
       labelStyle = { ...labelStyle, fill: "#c2410c" };
       labelBgStyle = { fill: "rgba(255,241,230,0.92)", fillOpacity: 0.92 };
-      labeledTargets.add(target);
+      labeledTgt.add(target);
+    } else if (isSplit && !labeledSrc.has(source)) {
+      const childCount = edgeList.filter(e => e.source === source).length;
+      label = `분할 ×${childCount}`;
+      labeledSrc.add(source);
+    } else if (isUsed && !labeledTgt.has(target)) {
+      label = "사용";
+      labelStyle = { ...labelStyle, fill: "#6b7280" };
+      labeledTgt.add(target);
+    }
+
+    const labelProps = label ? {
+      label,
+      labelStyle,
+      labelBgStyle,
+      labelBgPadding:       [2, 5],
+      labelBgBorderRadius:  3,
+    } : {};
+
+    // combine → 주황 점선 / 그 외 → 회색 실선
+    if (isCombine) {
+      return {
+        id: `${source}→${target}`,
+        source, target,
+        type: "smoothstep",
+        ...labelProps,
+        markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12, color: "#c2410c" },
+        style: { stroke: "#c2410c", strokeWidth: 1.5, strokeDasharray: "4 3" },
+      };
     }
 
     return {
       id: `${source}→${target}`,
-      source,
-      target,
+      source, target,
       type: "smoothstep",
-      ...(label ? {
-        label,
-        labelStyle,
-        labelBgStyle,
-        labelBgPadding: [3, 6],
-        labelBgBorderRadius: 4,
-      } : {}),
-      ...(isCombineEdge ? {
-        markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12, color: "#c2410c" },
-        style: { stroke: "#c2410c", strokeWidth: 1.5, strokeDasharray: "4 3" },
-      } : {
-        markerEnd: { type: MarkerType.ArrowClosed, width: 11, height: 11, color: "#c8cace" },
-        style: { stroke: "#c8cace", strokeWidth: 1.2 },
-      }),
+      ...labelProps,
+      markerEnd: { type: MarkerType.ArrowClosed, width: 11, height: 11, color: "#c8cace" },
+      style: { stroke: "#c8cace", strokeWidth: 1.2 },
     };
   });
 }
@@ -223,11 +205,7 @@ export default function AncestryTree({ rootId, selectedId, onNodeSelect, metaMap
 
   const buildFlow = useCallback(async (id) => {
     if (!id || !readContract) return;
-
-    setIsLoading(true);
-    setLoadError("");
-    setFlowNodes([]);
-    setFlowEdges([]);
+    setIsLoading(true); setLoadError(""); setFlowNodes([]); setFlowEdges([]);
 
     try {
       const { nodeMap, edgeList } = await loadTreeData(id, readContract);
@@ -235,17 +213,15 @@ export default function AncestryTree({ rootId, selectedId, onNodeSelect, metaMap
 
       const newNodes = [];
       for (const [nid, { steel }] of nodeMap) {
-        const p      = positions.get(nid) || { x: 0, y: 0 };
-        const statusN = Number(steel.status);
-        const kv      = metaMap?.get?.(nid);
-
+        const p = positions.get(nid) || { x: 0, y: 0 };
+        const kv = metaMap?.get?.(nid);
         newNodes.push({
           id:       nid,
           type:     "steelNode",
           position: p,
           data: {
             label:    nid,
-            status:   statusN,
+            status:   Number(steel.status),
             weightKg: gramsToKg(steel.weight),
             grade:    kv?.grade || "",
           },
@@ -253,12 +229,9 @@ export default function AncestryTree({ rootId, selectedId, onNodeSelect, metaMap
         });
       }
 
-      const newEdges = buildEdges(edgeList, nodeMap);
-
       setFlowNodes(newNodes);
-      setFlowEdges(newEdges);
-      console.log(`[AncestryTree] 완료: ${newNodes.length}노드 ${newEdges.length}엣지`);
-
+      setFlowEdges(buildEdges(edgeList, nodeMap));
+      console.log(`[AncestryTree] 완료: ${newNodes.length}노드 ${edgeList.length}엣지`);
       setTimeout(() => rfRef.current?.fitView({ padding: 0.25 }), 120);
     } catch (err) {
       console.error("[AncestryTree] 트리 빌드 실패:", err.message);
@@ -274,20 +247,15 @@ export default function AncestryTree({ rootId, selectedId, onNodeSelect, metaMap
     setFlowNodes((prev) => prev.map((n) => ({ ...n, selected: n.id === selectedId })));
   }, [selectedId, setFlowNodes]);
 
-  const handleNodeClick = useCallback((_, node) => {
-    onNodeSelect?.(node.id);
-  }, [onNodeSelect]);
-
-  const handleMove = useCallback((_, viewport) => {
-    setZoom(Math.round(viewport.zoom * 100));
-  }, []);
+  const handleNodeClick = useCallback((_, node) => { onNodeSelect?.(node.id); }, [onNodeSelect]);
+  const handleMove = useCallback((_, vp) => { setZoom(Math.round(vp.zoom * 100)); }, []);
 
   if (!rootId) return null;
 
   return (
     <div className="tree-card" style={{ height: "460px", position: "relative" }}>
 
-      {/* ── 트리 헤더 (search.html .tree-head) ────────────────────────── */}
+      {/* ── .tree-head ──────────────────────────────────────────────── */}
       <div className="tree-head">
         <h4>
           이력 트리
@@ -305,8 +273,7 @@ export default function AncestryTree({ rootId, selectedId, onNodeSelect, metaMap
           <button
             className="tree-btn-fit"
             type="button"
-            onClick={() => rfRef.current?.fitView({ padding: 0.25 })}
-            title="전체화면 맞춤"
+            onClick={() => rfRef.current?.fitView({ padding: 0.25, duration: 300 })}
           >
             전체화면
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
@@ -317,15 +284,15 @@ export default function AncestryTree({ rootId, selectedId, onNodeSelect, metaMap
         </div>
       </div>
 
-      {/* ── React Flow 뷰포트 ───────────────────────────────────────────── */}
+      {/* ── .tree-viewport ──────────────────────────────────────────── */}
       <div style={{ height: "calc(100% - 49px)", position: "relative" }}>
 
         {/* 로딩 오버레이 */}
         {isLoading && (
           <div style={{
-            position: "absolute", inset: 0, display: "flex",
-            alignItems: "center", justifyContent: "center",
-            background: "rgba(255,255,255,0.85)", zIndex: 20, gap: 10,
+            position: "absolute", inset: 0, zIndex: 20,
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+            background: "rgba(255,255,255,0.88)",
           }}>
             <span style={{
               display: "inline-block", width: 16, height: 16,
@@ -337,14 +304,15 @@ export default function AncestryTree({ rootId, selectedId, onNodeSelect, metaMap
         )}
         {loadError && !isLoading && (
           <div style={{
-            position: "absolute", inset: 0, display: "flex",
-            alignItems: "center", justifyContent: "center",
-            background: "rgba(255,255,255,0.85)", zIndex: 20,
+            position: "absolute", inset: 0, zIndex: 20,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(255,255,255,0.88)",
           }}>
             <p style={{ fontSize: 13, color: "#b42318" }}>{loadError}</p>
           </div>
         )}
 
+        {/* React Flow — dot-grid 배경 */}
         <ReactFlow
           nodes={flowNodes}
           edges={flowEdges}
@@ -369,37 +337,29 @@ export default function AncestryTree({ rootId, selectedId, onNodeSelect, metaMap
           proOptions={{ hideAttribution: true }}
         />
 
-        {/* .tree-hint — 좌상단 힌트 */}
+        {/* .tree-hint — 좌상단 */}
         {!isLoading && flowNodes.length > 0 && (
           <div className="tree-hint">
-            <span>드래그 이동</span>
-            <span>·</span>
-            <span>휠 줌</span>
-            <span>·</span>
+            <span>드래그 이동</span><span>·</span>
+            <span>휠 줌</span><span>·</span>
             <span>노드 클릭 → 상세</span>
           </div>
         )}
 
-        {/* .tree-zoom-label — 좌하단 줌 % */}
+        {/* .tree-zoom-label — 좌하단 */}
         {flowNodes.length > 0 && (
           <span className="tree-zoom-label">{zoom}%</span>
         )}
 
-        {/* .tree-controls — 우하단 +/−/⤢ */}
+        {/* .tree-controls — 우하단 */}
         {flowNodes.length > 0 && (
           <div className="tree-controls">
             <button type="button" aria-label="확대"
-              onClick={() => rfRef.current?.zoomIn({ duration: 200 })}>
-              +
-            </button>
+              onClick={() => rfRef.current?.zoomIn({ duration: 200 })}>+</button>
             <button type="button" aria-label="축소"
-              onClick={() => rfRef.current?.zoomOut({ duration: 200 })}>
-              −
-            </button>
+              onClick={() => rfRef.current?.zoomOut({ duration: 200 })}>−</button>
             <button type="button" aria-label="전체 맞춤" style={{ fontSize: 12 }}
-              onClick={() => rfRef.current?.fitView({ padding: 0.25, duration: 300 })}>
-              ⤢
-            </button>
+              onClick={() => rfRef.current?.fitView({ padding: 0.25, duration: 300 })}>⤢</button>
           </div>
         )}
 
