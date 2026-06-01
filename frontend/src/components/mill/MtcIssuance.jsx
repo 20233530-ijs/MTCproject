@@ -12,6 +12,7 @@
  */
 
 import { useState, useRef, useCallback } from "react";
+import { ethers } from "ethers";
 import { useContract } from "../../hooks/useContract";
 import { useWallet } from "../../hooks/useWallet";
 import { useTx } from "../../contexts/TxContext";
@@ -151,8 +152,19 @@ export default function MtcIssuance() {
       console.groupEnd();
       // ────────────────────────────────────────────────────────────────────────
 
+      // pdfHash 형식 보정: sha256()은 "0x"+64hex를 반환하지만
+      // 만약 32바이트 미만이면 zeroPadValue로 bytes32 맞춤
+      let safeHash = pdfHash;
+      if (!safeHash.startsWith("0x") || safeHash.length !== 66) {
+        console.error("[issueMtc] pdfHash 형식 오류:", safeHash);
+        throw new Error(`pdfHash 형식이 올바르지 않습니다: ${safeHash.slice(0, 20)}...`);
+      }
+      // ethers.getBytes로 bytes32 타입 명시 변환 (IPFS CID 문자열이 혼입되는 것 방지)
+      const pdfHashBytes32 = ethers.zeroPadValue(ethers.getBytes(safeHash), 32);
+
       // 컨트랙트 시그니처: issueMtc(steelId, weight, ipfsCid, pdfHash)
-      const tx = await contract.issueMtc(finalSteelId, weightGrams, cid, pdfHash);
+      // ipfsCid = string, pdfHash = bytes32
+      const tx = await contract.issueMtc(finalSteelId, weightGrams, cid, pdfHashBytes32);
       logTxSent("issueMtc", { steelId: finalSteelId, weight: weightGrams, cid, txHash: tx.hash });
       updateTx(txId, { status: "pending", txHash: tx.hash });
 
