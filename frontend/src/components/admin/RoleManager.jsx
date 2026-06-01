@@ -58,8 +58,9 @@ export default function RoleManager() {
 
     setIsLoadingList(true);
     try {
-      const latest = await provider.getBlockNumber();
-      const fromBlock = Math.max(0, latest - 2000);
+      // 컨트랙트 배포 블록부터 전체 이력 조회
+      // latest - 2000 으로 제한하면 배포 당시 constructor 이벤트가 누락됨
+      const fromBlock = 0;
 
       const [grantedLogs, revokedLogs] = await Promise.all([
         provider.getLogs({ address: CONTRACT_ADDRESS, fromBlock, toBlock: "latest",
@@ -148,12 +149,24 @@ export default function RoleManager() {
 
       const receipt = await tx.wait(1);
       logTxConfirmed({ txHash: tx.hash, blockNumber: receipt.blockNumber });
-      updateTx(txId, { status: "success", blockNumber: receipt.blockNumber });
-      console.log(`[RoleManager] ${role.grant} 완료:`, address);
+
+      // 온체인 hasRole() 로 실제 부여 여부 검증
+      const roleCheckFnMap = {
+        mill:        "hasMillRole",
+        fabricator:  "hasFabricatorRole",
+        integrator:  "hasIntegratorRole",
+      };
+      const confirmed = await readContract[roleCheckFnMap[selectedRole]](address);
+      if (!confirmed) {
+        updateTx(txId, { status: "rejected", errorMsg: "트랜잭션은 컨펌됐으나 역할이 부여되지 않았습니다. 컨트랙트 주소를 확인하세요." });
+        console.error("[RoleManager] hasRole 검증 실패 — 역할 미부여:", address);
+      } else {
+        updateTx(txId, { status: "success", blockNumber: receipt.blockNumber });
+        console.log(`[RoleManager] ${role.grant} 완료 (온체인 검증 ✅):`, address);
+      }
 
       setAddress("");
       setAddrError("");
-      // 목록 갱신
       await loadRoleList();
     } catch (err) {
       const msg = parseContractError(err);
