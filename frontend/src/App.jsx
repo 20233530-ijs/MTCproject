@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { WalletProvider } from "./contexts/WalletContext";
 import { TxProvider } from "./contexts/TxContext";
+import { RoleProvider } from "./contexts/RoleContext";
 import HomePage from "./pages/HomePage";
 import SearchPage from "./pages/SearchPage";
 import AdminPage from "./pages/AdminPage";
@@ -12,38 +13,40 @@ import TransferPage from "./pages/TransferPage";
 
 /**
  * 최상위 라우팅 + Provider 트리
- * WalletProvider → TxProvider → BrowserRouter
+ * WalletProvider → TxProvider → RoleProvider → BrowserRouter
  */
 export default function App() {
   return (
     <WalletProvider>
       <TxProvider>
-    <BrowserRouter>
-      <Routes>
-        {/* 공개 접근 */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/search" element={<SearchPage />} />
+        <RoleProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* 공개 접근 */}
+              <Route path="/" element={<HomePage />} />
+              <Route path="/search" element={<SearchPage />} />
 
-        {/* Admin 전용 */}
-        <Route path="/admin" element={<AdminPage />} />
+              {/* Admin 전용 */}
+              <Route path="/admin" element={<AdminPage />} />
 
-        {/* Mill / Admin */}
-        <Route path="/issue" element={<IssuePage />} />
+              {/* Mill / Admin */}
+              <Route path="/issue" element={<IssuePage />} />
 
-        {/* Fabricator / Admin */}
-        <Route path="/split" element={<SplitPage />} />
-        <Route path="/combine" element={<CombinePage />} />
+              {/* Fabricator / Admin */}
+              <Route path="/split" element={<SplitPage />} />
+              <Route path="/combine" element={<CombinePage />} />
 
-        {/* Integrator / Admin */}
-        <Route path="/usage" element={<UsagePage />} />
+              {/* Integrator / Admin */}
+              <Route path="/usage" element={<UsagePage />} />
 
-        {/* Mill / Fabricator / Admin */}
-        <Route path="/transfer" element={<TransferPage />} />
+              {/* Mill / Fabricator / Admin */}
+              <Route path="/transfer" element={<TransferPage />} />
 
-        {/* 알 수 없는 경로 → 메인 */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+              {/* 알 수 없는 경로 → 메인 */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </RoleProvider>
       </TxProvider>
     </WalletProvider>
   );
