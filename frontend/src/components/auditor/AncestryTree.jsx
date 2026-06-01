@@ -28,15 +28,14 @@ import { logQuery } from "../../utils/logger";
 
 const MAX_NODES = 30;
 
-// 상태 번호 → 노드 border / background
+// 상태 번호 → 노드 스타일 (Design Token 원본값)
 const STATUS_STYLE = {
-  0: { border: "2px solid #059669", bg: "#f0fdf4" }, // ACTIVE  초록
-  1: { border: "2px solid #ca8a04", bg: "#fefce8" }, // SPLIT   노랑
-  2: { border: "2px solid #ea580c", bg: "#fff7ed" }, // COMBINED 주황
-  3: { border: "2px solid #6b7280", bg: "#f9fafb" }, // USED    회색
+  0: { border: "1.5px solid #16a34a", bg: "#ecfdf3", color: "#16a34a" }, // ACTIVE
+  1: { border: "1.5px solid #b45309", bg: "#fef7e6", color: "#b45309" }, // SPLIT
+  2: { border: "1.5px solid #c2410c", bg: "#fff1e6", color: "#c2410c" }, // COMBINED
+  3: { border: "1.5px solid #e1e2e5", bg: "#f1f2f4", color: "#6b7280" }, // USED
 };
-const STATUS_TEXT   = { 0: "ACTIVE", 1: "SPLIT", 2: "COMBINED", 3: "USED" };
-const STATUS_COLOR  = { 0: "#059669", 1: "#ca8a04", 2: "#ea580c", 3: "#6b7280" };
+const STATUS_TEXT  = { 0: "ACTIVE", 1: "SPLIT", 2: "COMBINED", 3: "USED" };
 
 const NODE_W = 180;
 const H_GAP  = 220;
@@ -45,41 +44,66 @@ const V_GAP  = 130;
 // ── 커스텀 노드 ────────────────────────────────────────────────────────────
 function SteelNode({ data, selected }) {
   const s = STATUS_STYLE[data.status] ?? STATUS_STYLE[3];
-  const c = STATUS_COLOR[data.status] ?? "#6b7280";
-  const handleStyle = { background: "transparent", border: "none", width: 8, height: 8 };
+  const handleStyle = { background: "transparent", border: "none", width: 6, height: 6 };
+
   return (
     <div style={{
-      border: selected ? "2px solid #3B82F6" : s.border,
-      background: selected ? "#EFF6FF" : s.bg,
-      borderRadius: "10px",
-      padding: "10px 14px",
+      border: selected ? "1.5px solid #1d4ed8" : s.border,
+      background: selected ? "#eff6ff" : s.bg,
+      borderRadius: "8px",            /* --r-3 */
+      padding: "10px 12px",
       width: `${NODE_W}px`,
       boxShadow: selected
-        ? "0 0 0 3px rgba(59,130,246,0.25)"
-        : "0 2px 6px rgba(0,0,0,0.08)",
+        ? "0 0 0 3px rgba(29,78,216,0.15), 0 1px 2px rgba(10,10,11,0.04)"
+        : "0 1px 2px rgba(10,10,11,0.04)",  /* --shadow-sm */
       cursor: "pointer",
       boxSizing: "border-box",
       userSelect: "none",
       position: "relative",
+      fontFamily: "'Pretendard Variable', Pretendard, system-ui, sans-serif",
     }}>
-      {/* 엣지 연결 핸들 — 보이지 않지만 React Flow 엣지 라우팅에 필수 */}
       <Handle type="target" position={Position.Top}    style={handleStyle} />
       <Handle type="source" position={Position.Bottom} style={handleStyle} />
 
+      {/* 강재 ID */}
       <p style={{
-        fontFamily: "monospace", fontWeight: "bold", fontSize: "12px",
-        color: "#111827", marginBottom: "3px",
-        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        fontFamily: "'JetBrains Mono', 'SF Mono', ui-monospace, monospace",
+        fontWeight: 600,
+        fontSize: "12px",
+        letterSpacing: "-0.01em",
+        color: "#0a0a0b",           /* --text-primary */
+        marginBottom: "3px",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
       }}>
         {data.label}
       </p>
-      <p style={{ fontSize: "11px", color: "#6B7280", marginBottom: "4px" }}>
+
+      {/* 등급 · 무게 */}
+      <p style={{
+        fontSize: "11px",
+        color: "#80868f",           /* --text-tertiary */
+        marginBottom: "6px",
+        lineHeight: "14px",
+      }}>
         {data.grade ? `${data.grade} · ` : ""}{data.weightKg} kg
       </p>
+
+      {/* 상태 배지 (pill) */}
       <span style={{
-        display: "inline-block", fontSize: "10px", fontWeight: "bold",
-        padding: "1px 5px", borderRadius: "4px",
-        background: `${c}18`, color: c,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "4px",
+        height: "18px",
+        padding: "0 7px",
+        borderRadius: "999px",
+        fontSize: "10px",
+        fontWeight: 500,
+        letterSpacing: "0.02em",
+        background: `${s.color}14`,
+        color: s.color,
+        border: `1px solid ${s.color}30`,
       }}>
         {STATUS_TEXT[data.status] ?? "?"}
       </span>
@@ -202,8 +226,8 @@ export default function AncestryTree({ rootId, selectedId, onNodeSelect, metaMap
         source,
         target,
         type:      "smoothstep",
-        markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: "#9CA3AF" },
-        style:     { stroke: "#9CA3AF", strokeWidth: 1.5 },
+        markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12, color: "#c8cace" },
+        style:     { stroke: "#c8cace", strokeWidth: 1.2 },  /* --border-strong */
       }));
 
       setFlowNodes(newNodes);
@@ -259,12 +283,12 @@ export default function AncestryTree({ rootId, selectedId, onNodeSelect, metaMap
         minZoom={0.15}
         maxZoom={2}
         onInit={(instance) => { rfRef.current = instance; }}
-        style={{ background: "#F9FAFB" }}
+        style={{ background: "#f7f7f8" }}  /* --bg-canvas */
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable
       >
-        <Background color="#E5E7EB" gap={20} size={1} />
+        <Background color="#e1e2e5" gap={24} size={1} />  {/* --border-default */}
         <Controls showInteractive={false} />
       </ReactFlow>
 

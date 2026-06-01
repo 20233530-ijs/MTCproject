@@ -9,7 +9,7 @@ import TxStatus from "../common/TxStatus";
 
 export default function PageLayout({ children }) {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col" style={{ background: "#f7f7f8" }}>
       {/* 상단 고정 헤더 + 네트워크 경고 배너 */}
       <Header />
 

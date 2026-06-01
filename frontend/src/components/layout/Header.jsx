@@ -52,8 +52,9 @@ export default function Header() {
   return (
     <>
       {/* 헤더 바 */}
-      <header className="sticky top-0 z-[7000] bg-brand-surface border-b border-brand-border">
-        <div className="max-w-screen-xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-[7000] bg-white border-b border-[#e1e2e5]">
+        <div className="max-w-screen-xl mx-auto px-6 flex items-center justify-between gap-6"
+             style={{ height: "52px" }}>
 
           {/* 로고 */}
           <Link

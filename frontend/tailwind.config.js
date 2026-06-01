@@ -3,62 +3,123 @@ export default {
   content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
-      // 화면설계서 §11 역할별 색상 코드 (보라색 계열 제외)
       colors: {
+        // ── 역할 색상 ────────────────────────────────────────────────────
         role: {
-          admin: "#0c2340",       // 관리자 — 진남색 (보라 대신)
-          mill: "#1d4ed8",        // 제강사 — 파랑 (#2563EB 계열)
-          fabricator: "#047857",  // 가공사 — 초록
-          integrator: "#b45309",  // 통합사 — 호박색
-          auditor: "#4b5563",     // 조회자 — 회색
+          admin:       "#0c2340",
+          mill:        "#1d4ed8",
+          fabricator:  "#047857",
+          integrator:  "#b45309",
+          auditor:     "#4b5563",
         },
-        // 강재 상태 배지 색상
+
+        // ── 강재 상태 (Design Token 원본값) ─────────────────────────────
         status: {
-          active: "#059669",      // ACTIVE — 초록
-          split: "#ca8a04",       // SPLIT — 노랑
-          combined: "#ea580c",    // COMBINED — 주황
-          used: "#6b7280",        // USED — 회색
+          active:   "#16a34a",   // ACTIVE
+          split:    "#b45309",   // SPLIT   (이전: #ca8a04)
+          combined: "#c2410c",   // COMBINED (이전: #ea580c)
+          used:     "#6b7280",   // USED
+          // 배경색
+          "active-bg":   "#ecfdf3",
+          "split-bg":    "#fef7e6",
+          "combined-bg": "#fff1e6",
+          "used-bg":     "#f1f2f4",
         },
-        // 브랜드 색상 (헤더, 로고)
+
+        // ── 브랜드 / 서피스 (Design Token) ──────────────────────────────
         brand: {
-          DEFAULT: "#0f172a",     // 메인 다크 (slate-900)
-          surface: "#1e293b",     // 헤더 배경 (slate-800)
-          border: "#334155",      // 테두리 (slate-700)
+          DEFAULT: "#0a0a0b",   // primary (near-black)
+          hover:   "#1c1c1f",
+          pressed: "#2a2a2d",
+          fg:      "#ffffff",
+          canvas:  "#f7f7f8",   // page background
+          surface: "#ffffff",   // card background
+          subtle:  "#fafafa",   // secondary surface
+          muted:   "#f1f2f4",   // hover bg
+          // 헤더는 밝은 배경
+          header:  "#ffffff",
+          border:  "#e1e2e5",   // border-default
+        },
+
+        // ── 텍스트 계층 ─────────────────────────────────────────────────
+        text: {
+          primary:   "#0a0a0b",
+          secondary: "#4b5160",
+          tertiary:  "#80868f",
+          disabled:  "#b3b6bd",
+        },
+
+        // ── 테두리 ──────────────────────────────────────────────────────
+        border: {
+          subtle:  "#ececee",
+          default: "#e1e2e5",
+          strong:  "#c8cace",
+          focus:   "#0a0a0b",
+        },
+
+        // ── 트랜잭션 상태 ────────────────────────────────────────────────
+        tx: {
+          sending:    "#80868f",
+          "sending-bg": "#f1f2f4",
+          pending:    "#1d4ed8",
+          "pending-bg": "#eef2ff",
+          success:    "#15803d",
+          "success-bg": "#ecfdf3",
+          error:      "#b42318",
+          "error-bg":   "#fef3f2",
         },
       },
+
       fontFamily: {
-        // 한국어 레이블용
         sans: [
+          "Pretendard Variable",
           "Pretendard",
           "-apple-system",
           "BlinkMacSystemFont",
+          "Apple SD Gothic Neo",
+          "Malgun Gothic",
           "system-ui",
           "sans-serif",
         ],
-        // 코드·주소·ID 표시용 mono
         mono: [
           "JetBrains Mono",
-          "Fira Code",
+          "SF Mono",
+          "ui-monospace",
+          "Menlo",
           "Consolas",
           "monospace",
         ],
       },
-      // 트랜잭션 토스트 z-index
+
+      fontSize: {
+        "2xs": ["11px", { lineHeight: "14px", letterSpacing: "0.02em" }], // caption
+      },
+
       zIndex: {
-        toast: "9000",
-        modal: "8000",
-        header: "7000",
+        toast:    "9000",
+        modal:    "8000",
+        header:   "7000",
         eventlog: "6000",
       },
+
       animation: {
         "spin-slow": "spin 2s linear infinite",
-        "fade-in": "fadeIn 0.2s ease-out",
+        "fade-in":   "fadeIn 0.2s cubic-bezier(.2,.7,.2,1)",
+        "pulse-dot": "pulse 1.6s ease-in-out infinite",
       },
+
       keyframes: {
         fadeIn: {
           from: { opacity: "0", transform: "translateY(4px)" },
-          to: { opacity: "1", transform: "translateY(0)" },
+          to:   { opacity: "1", transform: "translateY(0)" },
         },
+      },
+
+      boxShadow: {
+        sm:    "0 1px 2px rgba(10,10,11,0.04)",
+        md:    "0 4px 12px rgba(10,10,11,0.06), 0 0 0 1px #ececee",
+        lg:    "0 12px 32px rgba(10,10,11,0.10), 0 0 0 1px #ececee",
+        toast: "0 8px 24px rgba(10,10,11,0.10), 0 0 0 1px #ececee",
       },
     },
   },
