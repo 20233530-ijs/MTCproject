@@ -1,6 +1,6 @@
 /**
- * 강재/부품 ID 조회 페이지 (/search)
- * 화면설계서 §4 기준
+ * 강재/부품 ID 조회 페이지 — Claude Design search.jsx 레이아웃 적용
+ * 트리 LEFT (1fr) + 상세 RIGHT (408px)
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -21,12 +21,12 @@ export default function SearchPage() {
   const urlId   = searchParams.get("id")   || "";
   const urlType = searchParams.get("type") || "steel";
 
-  const [isSearching,   setIsSearching]   = useState(false);
-  const [searchError,   setSearchError]   = useState("");
-  const [rootSteelId,   setRootSteelId]   = useState(urlId);
-  const [detailSteelId, setDetailSteelId] = useState(urlId);
-  const [selectedNodeId,setSelectedNodeId]= useState(urlId);
-  const [metaMap,       setMetaMap]       = useState(() => new Map());
+  const [isSearching,    setIsSearching]    = useState(false);
+  const [searchError,    setSearchError]    = useState("");
+  const [rootSteelId,    setRootSteelId]    = useState(urlId);
+  const [detailSteelId,  setDetailSteelId]  = useState(urlId);
+  const [selectedNodeId, setSelectedNodeId] = useState(urlId);
+  const [metaMap,        setMetaMap]        = useState(() => new Map());
 
   useEffect(() => {
     if (!urlId) {
@@ -81,24 +81,23 @@ export default function SearchPage() {
   return (
     <PageLayout>
 
-      {/* ── 페이지 헤더 ─────────────────────────────────────────────────── */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-brand-surface">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M7 1L12.5 4.25V10.75L7 14L1.5 10.75V4.25L7 1Z"
-                fill="none" stroke="#93c5fd" strokeWidth="1.2"/>
-            </svg>
-          </span>
-          <h2 className="text-base font-bold text-gray-900">강재 이력 조회</h2>
-        </div>
-        <p className="text-xs text-gray-500 ml-8">
-          강재 ID 또는 부품 ID로 온체인 데이터·화학 성분·MTC PDF·이력 트리를 조회합니다
-        </p>
+      {/* ── 페이지 헤더 ─────────────────────────────────────────────── */}
+      <div className="search-page-head">
+        <h1>
+          강재 이력 조회
+          <span className="en">On-chain Traceability</span>
+        </h1>
+        {urlId && (
+          <div className="crumb">
+            <span>조회</span>
+            <span>/</span>
+            <span style={{ color: "var(--text-primary)" }}>{urlId}</span>
+          </div>
+        )}
       </div>
 
-      {/* ── 검색 패널 ─────────────────────────────────────────────────────── */}
-      <div className="bg-white border border-gray-200 rounded-xl px-5 py-4 mb-6 shadow-sm">
+      {/* ── 검색 바 ─────────────────────────────────────────────────── */}
+      <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: "var(--r-4)", padding: "20px", boxShadow: "0 1px 2px rgba(10,10,11,0.04)", marginBottom: "8px" }}>
         <SearchPanel
           searchId={urlId}
           searchType={urlType}
@@ -106,57 +105,58 @@ export default function SearchPage() {
           isLoading={isSearching}
         />
         {searchError && (
-          <p className="mt-2.5 text-sm text-red-600 flex items-center gap-1.5">
-            <span className="font-bold">✗</span>{searchError}
-          </p>
+          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#b42318" }}>
+            <span style={{ fontWeight: 700 }}>✗</span>
+            {searchError}
+          </div>
         )}
       </div>
 
-      {/* ── 결과 없음 ─────────────────────────────────────────────────────── */}
+      {/* ── 빈 상태 ─────────────────────────────────────────────────── */}
       {!rootSteelId && (
-        <div className="bg-white border border-dashed border-gray-200 rounded-xl
-                        flex flex-col items-center justify-center py-20 gap-3">
-          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="text-gray-300">
-            <circle cx="18" cy="18" r="12" stroke="currentColor" strokeWidth="2"/>
-            <path d="M27 27L34 34" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-          <p className="text-sm text-gray-400">강재 ID 또는 부품 ID를 입력하여 이력을 조회하세요</p>
-          <p className="text-xs text-gray-300">예: H_STS304_001 · P_001</p>
+        <div className="lookup-empty">
+          <div className="ico">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.6"/>
+              <path d="M20 20L17 17" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <h3>조회할 강재·부품 ID를 입력하세요</h3>
+          <p>
+            온체인에 기록된 MTC의 발행·분할·조합·이전·사용 이력을 조회하고,
+            IPFS 원본 PDF의 해시를 컨트랙트와 대조해 진본성을 검증합니다.
+          </p>
+          <div className="examples">
+            {["H_STS304_001", "H_001", "COMB_001", "P_001"].map((ex) => (
+              <span key={ex} className="chip"
+                    onClick={() => handleSearch(ex, "steel")}
+                    style={{ cursor: "pointer" }}>
+                {ex}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* ── 검색 결과 ─────────────────────────────────────────────────────── */}
+      {/* ── 검색 결과: 트리(left) + 상세(right) ─────────────────────── */}
       {rootSteelId && (
-        <div className="flex gap-5 items-start">
+        <div className="results">
 
-          {/* 좌측: 강재 상세 */}
-          <div className="shrink-0 w-[380px]">
+          {/* LEFT: 이력 트리 (1fr) */}
+          <div>
             {detailSteelId !== rootSteelId && (
-              <div className="flex items-center justify-between mb-2 px-1">
-                <span className="text-[11px] text-gray-400 font-mono truncate">{detailSteelId}</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px", padding: "0 2px" }}>
+                <span style={{ fontSize: "11px", color: "#80868f", fontFamily: "var(--font-mono)" }}>
+                  {detailSteelId}
+                </span>
                 <button
                   onClick={handleBackToRoot}
-                  className="text-[11px] text-blue-600 hover:text-blue-800
-                             flex items-center gap-1 shrink-0 ml-2 font-medium"
+                  style={{ fontSize: "11px", color: "#0a0a0b", background: "none", border: "none", cursor: "pointer", fontWeight: 500, display: "flex", alignItems: "center", gap: "4px" }}
                 >
                   ← 루트로
                 </button>
               </div>
             )}
-            <SteelDetail steelId={detailSteelId} onSteelLoaded={handleSteelLoaded} />
-          </div>
-
-          {/* 우측: 이력 트리 */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-2 px-1">
-              <p className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                이력 트리
-              </p>
-              <p className="text-[10px] text-gray-400">
-                노드 클릭 → 상세 전환 · 휠 줌 · 드래그
-              </p>
-            </div>
             <AncestryTree
               rootId={rootSteelId}
               selectedId={selectedNodeId}
@@ -165,8 +165,14 @@ export default function SearchPage() {
             />
           </div>
 
+          {/* RIGHT: 강재 상세 (408px) */}
+          <div>
+            <SteelDetail steelId={detailSteelId} onSteelLoaded={handleSteelLoaded} />
+          </div>
+
         </div>
       )}
+
     </PageLayout>
   );
 }

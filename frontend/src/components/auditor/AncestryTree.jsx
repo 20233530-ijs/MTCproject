@@ -28,85 +28,78 @@ import { logQuery } from "../../utils/logger";
 
 const MAX_NODES = 30;
 
-// 상태 번호 → 노드 스타일 (Design Token 원본값)
-const STATUS_STYLE = {
-  0: { border: "1.5px solid #16a34a", bg: "#ecfdf3", color: "#16a34a" }, // ACTIVE
-  1: { border: "1.5px solid #b45309", bg: "#fef7e6", color: "#b45309" }, // SPLIT
-  2: { border: "1.5px solid #c2410c", bg: "#fff1e6", color: "#c2410c" }, // COMBINED
-  3: { border: "1.5px solid #e1e2e5", bg: "#f1f2f4", color: "#6b7280" }, // USED
+// 상태 → 왼쪽 바 색상 (Claude Design .tnode.s-* 기준)
+const STATUS_LEFT_COLOR = {
+  0: "#16a34a",   // ACTIVE
+  1: "#b45309",   // SPLIT
+  2: "#c2410c",   // COMBINED
+  3: "#6b7280",   // USED
 };
-const STATUS_TEXT  = { 0: "ACTIVE", 1: "SPLIT", 2: "COMBINED", 3: "USED" };
+const STATUS_BADGE_BG = {
+  0: "#ecfdf3", 1: "#fef7e6", 2: "#fff1e6", 3: "#f1f2f4",
+};
+const STATUS_TEXT = { 0: "ACTIVE", 1: "SPLIT", 2: "COMBINED", 3: "USED" };
 
-const NODE_W = 180;
+const NODE_W = 176;
 const H_GAP  = 220;
 const V_GAP  = 130;
 
-// ── 커스텀 노드 ────────────────────────────────────────────────────────────
+// ── 커스텀 노드 — Claude Design .tnode 스타일 ───────────────────────────────
 function SteelNode({ data, selected }) {
-  const s = STATUS_STYLE[data.status] ?? STATUS_STYLE[3];
+  const statusN = data.status ?? 3;
+  const leftColor  = STATUS_LEFT_COLOR[statusN]  ?? "#6b7280";
+  const badgeBg    = STATUS_BADGE_BG[statusN]    ?? "#f1f2f4";
   const handleStyle = { background: "transparent", border: "none", width: 6, height: 6 };
 
   return (
     <div style={{
-      border: selected ? "1.5px solid #1d4ed8" : s.border,
-      background: selected ? "#eff6ff" : s.bg,
-      borderRadius: "8px",            /* --r-3 */
-      padding: "10px 12px",
       width: `${NODE_W}px`,
+      background: "#ffffff",
+      border: selected ? "1.5px solid #0a0a0b" : "1.5px solid #e1e2e5",
+      borderLeft: selected ? "4px solid #0a0a0b" : `4px solid ${leftColor}`,
+      borderRadius: "8px",
+      padding: "10px 12px",
       boxShadow: selected
-        ? "0 0 0 3px rgba(29,78,216,0.15), 0 1px 2px rgba(10,10,11,0.04)"
-        : "0 1px 2px rgba(10,10,11,0.04)",  /* --shadow-sm */
+        ? "0 0 0 2px #0a0a0b, 0 4px 12px rgba(10,10,11,0.06)"
+        : "0 1px 2px rgba(10,10,11,0.04)",
       cursor: "pointer",
       boxSizing: "border-box",
       userSelect: "none",
       position: "relative",
+      transition: "box-shadow .12s ease",
       fontFamily: "'Pretendard Variable', Pretendard, system-ui, sans-serif",
     }}>
       <Handle type="target" position={Position.Top}    style={handleStyle} />
       <Handle type="source" position={Position.Bottom} style={handleStyle} />
 
-      {/* 강재 ID */}
-      <p style={{
-        fontFamily: "'JetBrains Mono', 'SF Mono', ui-monospace, monospace",
-        fontWeight: 600,
-        fontSize: "12px",
-        letterSpacing: "-0.01em",
-        color: "#0a0a0b",           /* --text-primary */
-        marginBottom: "3px",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
-      }}>
-        {data.label}
-      </p>
+      {/* 상단: ID + 상태 배지 */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+        <span style={{
+          fontFamily: "'JetBrains Mono', 'SF Mono', ui-monospace, monospace",
+          fontSize: "13px", fontWeight: 600,
+          color: "#0a0a0b",
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          maxWidth: "110px",
+        }}>
+          {data.label}
+        </span>
+        <span style={{
+          fontSize: "9px", fontWeight: 600, letterSpacing: "0.04em",
+          padding: "1px 6px", borderRadius: "999px",
+          background: badgeBg, color: leftColor, whiteSpace: "nowrap",
+        }}>
+          {STATUS_TEXT[statusN] ?? "?"}
+        </span>
+      </div>
 
       {/* 등급 · 무게 */}
-      <p style={{
-        fontSize: "11px",
-        color: "#80868f",           /* --text-tertiary */
-        marginBottom: "6px",
-        lineHeight: "14px",
-      }}>
-        {data.grade ? `${data.grade} · ` : ""}{data.weightKg} kg
-      </p>
-
-      {/* 상태 배지 (pill) */}
-      <span style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "4px",
-        height: "18px",
-        padding: "0 7px",
-        borderRadius: "999px",
-        fontSize: "10px",
-        fontWeight: 500,
-        letterSpacing: "0.02em",
-        background: `${s.color}14`,
-        color: s.color,
-        border: `1px solid ${s.color}30`,
-      }}>
-        {STATUS_TEXT[data.status] ?? "?"}
-      </span>
+      <div style={{ fontSize: "12px", color: "#4b5160", lineHeight: "16px" }}>
+        {data.grade ? `${data.grade} · ` : ""}
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", color: "#0a0a0b", fontWeight: 500 }}>
+          {data.weightKg}
+        </span>
+        {" kg"}
+      </div>
     </div>
   );
 }
@@ -257,57 +250,66 @@ export default function AncestryTree({ rootId, selectedId, onNodeSelect, metaMap
   if (!rootId) return null;
 
   return (
-    <div className="relative w-full rounded-xl overflow-hidden border border-gray-200" style={{ height: "420px" }}>
-      {/* 로딩 오버레이 */}
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
-          <span className="inline-block w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
-          <span className="ml-3 text-sm text-gray-500">이력 트리 로드 중...</span>
+    <div className="tree-card" style={{ height: "460px", position: "relative" }}>
+      {/* 트리 헤더 */}
+      <div className="tree-head">
+        <h4>
+          이력 트리
+          <span className="meta">
+            on-chain · {flowNodes.length} nodes · {flowEdges.length} edges
+          </span>
+        </h4>
+        <div className="right">
+          <div className="tree-legend">
+            <span className="lg active"><span className="sw"></span>유효</span>
+            <span className="lg split"><span className="sw"></span>분할</span>
+            <span className="lg combined"><span className="sw"></span>조합</span>
+            <span className="lg used"><span className="sw"></span>사용</span>
+          </div>
         </div>
-      )}
-      {loadError && !isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/80">
-          <p className="text-sm text-red-600">{loadError}</p>
-        </div>
-      )}
+      </div>
 
-      <ReactFlow
-        nodes={flowNodes}
-        edges={flowEdges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeClick={handleNodeClick}
-        nodeTypes={nodeTypes}
-        fitView
-        fitViewOptions={{ padding: 0.25 }}
-        minZoom={0.15}
-        maxZoom={2}
-        onInit={(instance) => { rfRef.current = instance; }}
-        style={{ background: "#f7f7f8" }}  /* --bg-canvas */
-        nodesDraggable={false}
-        nodesConnectable={false}
-        elementsSelectable
-      >
-        <Background color="#e1e2e5" gap={24} size={1} />  {/* --border-default */}
-        <Controls showInteractive={false} />
-      </ReactFlow>
+      {/* React Flow 뷰포트 */}
+      <div style={{ height: "calc(100% - 48px)", position: "relative" }}>
+        {/* 로딩 오버레이 */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center z-10"
+               style={{ background: "rgba(255,255,255,0.85)" }}>
+            <span className="inline-block w-5 h-5 border-2 border-[#e1e2e5] border-t-[#4b5160] rounded-full animate-spin" />
+            <span className="ml-3 text-sm" style={{ color: "#80868f" }}>이력 트리 로드 중...</span>
+          </div>
+        )}
+        {loadError && !isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center z-10"
+               style={{ background: "rgba(255,255,255,0.85)" }}>
+            <p className="text-sm" style={{ color: "#b42318" }}>{loadError}</p>
+          </div>
+        )}
 
-      {/* 상태 범례 */}
-      {flowNodes.length > 0 && (
-        <div className="absolute bottom-10 right-3 flex flex-col gap-1 bg-white/95 border border-gray-200 rounded-lg p-2 text-[10px] z-10 shadow-sm">
-          {([
-            [0, "#059669", "ACTIVE"],
-            [1, "#ca8a04", "SPLIT"],
-            [2, "#ea580c", "COMBINED"],
-            [3, "#6b7280", "USED"],
-          ]).map(([k, color, label]) => (
-            <div key={k} className="flex items-center gap-1.5">
-              <span style={{ width: 10, height: 10, borderRadius: 2, background: color, display: "inline-block", flexShrink: 0 }} />
-              <span className="text-gray-600">{label}</span>
-            </div>
-          ))}
-        </div>
-      )}
+        <ReactFlow
+          nodes={flowNodes}
+          edges={flowEdges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onNodeClick={handleNodeClick}
+          nodeTypes={nodeTypes}
+          fitView
+          fitViewOptions={{ padding: 0.25 }}
+          minZoom={0.15}
+          maxZoom={2}
+          onInit={(instance) => { rfRef.current = instance; }}
+          style={{
+            background: "#f7f7f8",
+            backgroundImage: "radial-gradient(circle, rgba(10,10,11,0.07) 1px, transparent 1px)",
+            backgroundSize: "22px 22px",
+          }}
+          nodesDraggable={false}
+          nodesConnectable={false}
+          elementsSelectable
+        >
+          <Controls showInteractive={false} />
+        </ReactFlow>
+      </div>
     </div>
   );
 }
