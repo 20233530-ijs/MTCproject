@@ -42,46 +42,56 @@ export default function RoleSwitcher() {
   const displayMode = selectedMode || "admin";
 
   return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setIsOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                   bg-slate-700 hover:bg-slate-600 transition-colors
-                   text-xs text-slate-200 font-medium whitespace-nowrap"
-      >
-        <span className="text-slate-400 text-[10px]">{MODE_ICON[displayMode]}</span>
+    <div ref={ref} style={{ position: "relative" }}>
+      {/* 트리거 버튼 — .role-select (MTCPROJECT/styles.css) */}
+      <button className="role-select" onClick={() => setIsOpen((v) => !v)}>
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.06em", color: "var(--text-tertiary)", textTransform: "uppercase" }}>
+          role
+        </span>
         <span>{ROLE_LABEL[displayMode]} 모드</span>
-        <span className="text-slate-400 text-[10px] ml-0.5">▼</span>
+        <svg className="chev" width="12" height="12" viewBox="0 0 24 24" fill="none">
+          <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
       </button>
 
+      {/* 드롭다운 패널 */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1.5 z-[8000]
-                        w-52 bg-white border border-gray-200 rounded-xl shadow-lg
-                        overflow-hidden animate-fade-in">
-          <div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
-            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+        <div style={{
+          position: "absolute", right: 0, top: "calc(100% + 6px)", zIndex: 8000,
+          width: 208, background: "var(--bg-surface)",
+          border: "1px solid var(--border-default)",
+          borderRadius: 10, boxShadow: "0 8px 24px rgba(10,10,11,0.10), 0 0 0 1px #ececee",
+          overflow: "hidden",
+        }}>
+          <div style={{
+            padding: "8px 12px", background: "var(--bg-subtle)",
+            borderBottom: "1px solid var(--border-subtle)",
+          }}>
+            <p style={{ fontSize: 10, color: "var(--text-tertiary)", fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase", margin: 0 }}>
               데모 모드 전환 (Admin 전용)
             </p>
           </div>
           {MODES.map((mode) => (
             <button
               key={mode}
-              onClick={() => {
-                setMode(mode === "admin" ? null : mode);
-                setIsOpen(false);
+              onClick={() => { setMode(mode === "admin" ? null : mode); setIsOpen(false); }}
+              style={{
+                width: "100%", display: "flex", alignItems: "center", gap: 10,
+                padding: "10px 12px", border: 0, textAlign: "left", cursor: "pointer",
+                background: effectiveRole === mode ? "var(--bg-muted)" : "var(--bg-surface)",
+                color: effectiveRole === mode ? "var(--text-primary)" : "var(--text-secondary)",
+                fontWeight: effectiveRole === mode ? 500 : 400,
+                fontSize: 13, fontFamily: "inherit",
+                borderBottom: "1px solid var(--border-subtle)",
+                transition: "background .1s",
               }}
-              className={[
-                "w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left",
-                "hover:bg-gray-50 transition-colors",
-                effectiveRole === mode
-                  ? "bg-blue-50 text-blue-700 font-medium"
-                  : "text-gray-700",
-              ].join(" ")}
+              onMouseEnter={(e) => { if (effectiveRole !== mode) e.currentTarget.style.background = "var(--bg-subtle)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = effectiveRole === mode ? "var(--bg-muted)" : "var(--bg-surface)"; }}
             >
-              <span className="text-gray-400 text-xs w-3">{MODE_ICON[mode]}</span>
+              <span style={{ fontSize: 10, color: "var(--text-tertiary)", width: 12, flexShrink: 0 }}>{MODE_ICON[mode]}</span>
               <span>{ROLE_LABEL[mode]}</span>
               {effectiveRole === mode && (
-                <span className="ml-auto text-blue-500 text-xs">✓</span>
+                <span style={{ marginLeft: "auto", color: "var(--status-active)", fontSize: 12 }}>✓</span>
               )}
             </button>
           ))}
