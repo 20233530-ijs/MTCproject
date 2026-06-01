@@ -137,8 +137,22 @@ export default function MtcIssuance() {
     try {
       const contract = await getSignedContract();
 
-      // 컨트랙트 호출: issueMtc(steelId, weight, pdfHash, cid)
-      const tx = await contract.issueMtc(finalSteelId, weightGrams, pdfHash, cid);
+      // ── 디버그 로그 ─────────────────────────────────────────────────────────
+      const signer = await contract.runner.provider?.getSigner?.() ?? contract.runner;
+      const network = await contract.runner.provider?.getNetwork?.();
+      console.group("[issueMtc] 호출 파라미터");
+      console.log("컨트랙트 주소 :", await contract.getAddress());
+      console.log("지갑 주소     :", await signer.getAddress());
+      console.log("chainId       :", network?.chainId?.toString());
+      console.log("steelId       :", finalSteelId);
+      console.log("weight (g)    :", weightGrams, typeof weightGrams);
+      console.log("ipfsCid       :", cid);
+      console.log("pdfHash       :", pdfHash);
+      console.groupEnd();
+      // ────────────────────────────────────────────────────────────────────────
+
+      // 컨트랙트 시그니처: issueMtc(steelId, weight, ipfsCid, pdfHash)
+      const tx = await contract.issueMtc(finalSteelId, weightGrams, cid, pdfHash);
       logTxSent("issueMtc", { steelId: finalSteelId, weight: weightGrams, cid, txHash: tx.hash });
       updateTx(txId, { status: "pending", txHash: tx.hash });
 
