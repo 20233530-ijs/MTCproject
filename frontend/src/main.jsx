@@ -5,6 +5,7 @@ import "reactflow/dist/style.css"; // React Flow 엣지·컨트롤 CSS — 반�
 import "./index.css";
 import "./search-design.css";
 import "./home-design.css";
+import "./tx-design.css";
 
 // 시작 시 7일 이상 된 이벤트 로그 정리
 import { clearOldLogs } from "./utils/logger";

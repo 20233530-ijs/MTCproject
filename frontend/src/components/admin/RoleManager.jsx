@@ -11,6 +11,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
+import { FormCard, Field, TxtInput, ActionFooter, ConfirmModal } from "../TxShared";
 import { useContract } from "../../hooks/useContract";
 import { useWallet } from "../../hooks/useWallet";
 import { useTx } from "../../contexts/TxContext";
@@ -210,230 +211,148 @@ export default function RoleManager() {
   const isDeployed = CONTRACT_ADDRESS !== "0x0000000000000000000000000000000000000000";
 
   return (
-    <div>
+    <div className="tx-wrap wide">
       {/* 탭 */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit mb-6">
-        <TabBtn active={activeTab === "register"} onClick={() => setActiveTab("register")}>역할 등록</TabBtn>
-        <TabBtn active={activeTab === "list"} onClick={() => setActiveTab("list")}>
-          역할 조회
-          {roleList.length > 0 && (
-            <span className="ml-1.5 bg-blue-100 text-blue-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-              {roleList.length}
-            </span>
-          )}
-        </TabBtn>
+      <div style={{ display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:20 }}>
+        <div></div>
+        <div className="tabs">
+          <button className={activeTab === "register" ? "is-on" : ""} onClick={() => setActiveTab("register")}>
+            역할 등록
+          </button>
+          <button className={activeTab === "list" ? "is-on" : ""} onClick={() => setActiveTab("list")}>
+            역할 조회
+            {roleList.length > 0 && (
+              <span style={{ marginLeft:6,background:"var(--status-active-bg)",color:"var(--status-active)",borderRadius:"999px",padding:"1px 7px",fontSize:10,fontFamily:"var(--font-mono)" }}>
+                {roleList.length}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* ── 역할 등록 탭 ── */}
       {activeTab === "register" && (
-        <div className="section-card max-w-lg space-y-5">
-          {/* 지갑 주소 */}
-          <div>
-            <label className="label">
-              지갑 주소 <span className="text-gray-400 font-mono text-xs">(Ethereum)</span>
-            </label>
-            <input
-              type="text"
-              value={address}
-              onChange={handleAddressChange}
-              placeholder="0x..."
-              className={["input", addrError ? "border-red-400 focus:ring-red-300" : ""].join(" ")}
-              disabled={isSending}
+        <div className="form-stack">
+          <FormCard title="역할 등록" en="Grant role" src="chain">
+            <Field label="지갑 주소" en="address" req
+              error={addrError}
+              hint="중복 등록은 컨트랙트가 무시합니다 (idempotent).">
+              <TxtInput value={address} onChange={handleAddressChange}
+                placeholder="0x…" state={addrError ? "error" : address && isValidAddress(address) ? "ok" : null}
+                disabled={isSending} />
+            </Field>
+            <Field label="역할 선택" en="role" req>
+              <div className="role-radio-list">
+                {ROLES.map((role) => (
+                  <div key={role.key}
+                    className={"role-radio" + (selectedRole === role.key ? " is-on" : "")}
+                    onClick={() => !isSending && setSelectedRole(role.key)}>
+                    <span className="radio"></span>
+                    <span className="rr-txt">
+                      <span className="nm">{role.label}</span>
+                      <span className="ds">
+                        {role.key === "mill" ? "강재 MTC 최초 발행 권한"
+                          : role.key === "fabricator" ? "분할·조합 권한"
+                          : "사용 등록 권한"}
+                      </span>
+                    </span>
+                    <span className="rr-fn">{role.grant}()</span>
+                  </div>
+                ))}
+              </div>
+            </Field>
+            <ActionFooter
+              canSubmit={canGrant}
+              gateNote="지갑 주소를 입력하세요"
+              submitLabel="역할 등록"
+              onReset={() => { setAddress(""); setAddrError(""); setSelectedRole("mill"); }}
+              onSubmit={handleGrant}
+              loading={isSending}
             />
-            {addrError && (
-              <p className="field-error mt-1">{addrError}</p>
-            )}
-          </div>
-
-          {/* 역할 선택 */}
-          <div>
-            <label className="label">역할 선택</label>
-            <div className="space-y-2.5">
-              {ROLES.map((role) => (
-                <label
-                  key={role.key}
-                  className="flex items-center gap-2.5 text-sm cursor-pointer select-none"
-                >
-                  <input
-                    type="radio"
-                    name="role"
-                    value={role.key}
-                    checked={selectedRole === role.key}
-                    onChange={() => setSelectedRole(role.key)}
-                    className="w-4 h-4 accent-blue-600"
-                    disabled={isSending}
-                  />
-                  <span className="text-gray-800">{role.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <button
-            onClick={handleGrant}
-            disabled={!canGrant}
-            className="btn-blue w-full"
-          >
-            {isSending ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                트랜잭션 전송 중...
-              </span>
-            ) : (
-              "역할 등록 — MetaMask ✍"
-            )}
-          </button>
-
-          {!isConnected && (
-            <p className="text-xs text-amber-600 text-center">
-              MetaMask 연결 후 역할을 등록할 수 있습니다
-            </p>
-          )}
-          {!isDeployed && (
-            <p className="text-xs text-gray-400 text-center font-mono">
-              VITE_CONTRACT_ADDRESS 미설정
-            </p>
-          )}
+          </FormCard>
         </div>
       )}
 
       {/* ── 역할 조회 탭 ── */}
       {activeTab === "list" && (
-        <div className="section-card">
-          <div className="flex items-center justify-between mb-4">
-            <p className="section-title mb-0">등록된 역할 목록</p>
-            <button
-              onClick={loadRoleList}
-              disabled={isLoadingList}
-              className="btn-ghost text-xs py-1 px-2"
-            >
+        <FormCard title="등록된 역할 목록" en="RoleGranted 이벤트 조회">
+          <div style={{ display:"flex",alignItems:"center",justifyContent:"flex-end",marginBottom:12 }}>
+            <button className="btn-add" onClick={loadRoleList} disabled={isLoadingList}>
               {isLoadingList ? "로딩..." : "↻ 새로고침"}
             </button>
           </div>
-
           {isLoadingList ? (
-            <p className="text-sm text-gray-400 text-center py-6">이벤트 로드 중...</p>
+            <p style={{ textAlign:"center",padding:"24px 0",fontSize:13,color:"var(--text-tertiary)" }}>이벤트 로드 중...</p>
           ) : !isDeployed ? (
-            <p className="text-sm text-gray-400 text-center py-6 font-mono">
-              컨트랙트 주소 미설정
-            </p>
+            <p style={{ textAlign:"center",padding:"24px 0",fontSize:13,color:"var(--text-tertiary)",fontFamily:"var(--font-mono)" }}>컨트랙트 주소 미설정</p>
           ) : roleList.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">
-              최근 2,000 블록 내 등록된 역할 없음
-            </p>
+            <p style={{ textAlign:"center",padding:"24px 0",fontSize:13,color:"var(--text-tertiary)" }}>등록된 역할 없음</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="text-left text-xs font-medium text-gray-500 pb-2 pr-4">주소</th>
-                    <th className="text-left text-xs font-medium text-gray-500 pb-2 pr-4">역할</th>
-                    <th className="text-left text-xs font-medium text-gray-500 pb-2 pr-4">블록</th>
-                    <th className="text-left text-xs font-medium text-gray-500 pb-2">액션</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {roleList.map((item) => {
-                    const role = ROLES.find((r) => r.key === item.roleKey);
-                    return (
-                      <tr key={`${item.address}-${item.roleKey}`} className="hover:bg-gray-50">
-                        <td className="py-2 pr-4 font-mono text-xs text-gray-700">
-                          <a
-                            href={`${ETHERSCAN_BASE}/address/${item.address}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:text-blue-600"
-                          >
-                            {shortenAddress(item.address)}
-                          </a>
-                        </td>
-                        <td className="py-2 pr-4">
-                          <span className={`badge-role-${item.roleKey}`}>
-                            {role?.label || item.roleKey}
-                          </span>
-                        </td>
-                        <td className="py-2 pr-4 font-mono text-xs text-gray-400">
-                          <a
-                            href={`${ETHERSCAN_BASE}/tx/${item.txHash}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:text-blue-600"
-                          >
-                            #{item.blockNumber.toLocaleString()}
-                          </a>
-                        </td>
-                        <td className="py-2">
-                          <button
-                            onClick={() => setRevokeTarget({ address: item.address, roleKey: item.roleKey })}
-                            className="text-xs text-red-600 hover:text-red-800 hover:underline font-medium transition-colors"
-                            disabled={!isConnected}
-                          >
-                            해제
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <table className="role-table">
+              <thead>
+                <tr>
+                  <th>주소</th>
+                  <th>역할</th>
+                  <th>블록</th>
+                  <th className="right">액션</th>
+                </tr>
+              </thead>
+              <tbody>
+                {roleList.map((item) => {
+                  const role = ROLES.find((r) => r.key === item.roleKey);
+                  return (
+                    <tr key={`${item.address}-${item.roleKey}`}>
+                      <td className="addr">
+                        <a href={`${ETHERSCAN_BASE}/address/${item.address}`}
+                           target="_blank" rel="noopener noreferrer"
+                           style={{ color:"var(--text-primary)",textDecoration:"none" }}>
+                          {shortenAddress(item.address)}
+                        </a>
+                      </td>
+                      <td>
+                        <span className={`badge badge-role-${item.roleKey}`}>
+                          {role?.key || item.roleKey}
+                        </span>
+                        <span style={{ color:"var(--text-secondary)",marginLeft:8,fontSize:12 }}>
+                          {role?.label || item.roleKey}
+                        </span>
+                      </td>
+                      <td className="date">
+                        <a href={`${ETHERSCAN_BASE}/tx/${item.txHash}`}
+                           target="_blank" rel="noopener noreferrer"
+                           style={{ color:"var(--text-tertiary)",textDecoration:"none" }}>
+                          #{item.blockNumber.toLocaleString()}
+                        </a>
+                      </td>
+                      <td className="right">
+                        <button
+                          style={{ fontSize:12,color:"var(--tx-error)",background:"none",border:"none",cursor:"pointer",fontWeight:500,padding:0 }}
+                          onClick={() => setRevokeTarget({ address: item.address, roleKey: item.roleKey })}
+                          disabled={!isConnected}
+                        >
+                          해제
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
-        </div>
+        </FormCard>
       )}
 
-      {/* ── 해제 확인 모달 ── */}
       {revokeTarget && (
-        <div className="fixed inset-0 z-[8000] flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setRevokeTarget(null)}
-          />
-          <div className="relative bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4">
-            <h3 className="text-base font-bold text-gray-900 mb-2">역할을 해제하시겠습니까?</h3>
-            <p className="text-sm text-gray-600 mb-1">
-              주소: <span className="font-mono">{shortenAddress(revokeTarget.address)}</span>
-            </p>
-            <p className="text-sm text-gray-600 mb-5">
-              역할: <span className="font-semibold">
-                {ROLES.find((r) => r.key === revokeTarget.roleKey)?.label}
-              </span>
-            </p>
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-5">
-              해제 후 해당 주소는 이 역할의 기능을 사용할 수 없습니다.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setRevokeTarget(null)}
-                className="btn-ghost flex-1"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleRevoke}
-                className="flex-1 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors"
-              >
-                해제 — MetaMask ✍
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          danger
+          title="역할을 해제하시겠습니까?"
+          body="해당 주소의 역할이 즉시 회수됩니다. 회수 후 이 주소는 해당 권한의 트랜잭션을 더 이상 수행할 수 없습니다."
+          target={`${shortenAddress(revokeTarget.address)} · ${ROLES.find((r) => r.key === revokeTarget.roleKey)?.label}`}
+          confirmLabel="역할 해제"
+          onCancel={() => setRevokeTarget(null)}
+          onConfirm={handleRevoke}
+        />
       )}
     </div>
-  );
-}
-
-function TabBtn({ active, onClick, children }) {
-  return (
-    <button
-      onClick={onClick}
-      className={[
-        "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center",
-        active
-          ? "bg-white text-gray-900 shadow-sm"
-          : "text-gray-500 hover:text-gray-700",
-      ].join(" ")}
-    >
-      {children}
-    </button>
   );
 }

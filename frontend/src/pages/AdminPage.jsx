@@ -10,6 +10,7 @@ import PageLayout from "../components/layout/PageLayout";
 import RoleManager from "../components/admin/RoleManager";
 import { useRole } from "../hooks/useRole";
 import { useWallet } from "../hooks/useWallet";
+import { TxPageHead, PageConnectGuard } from "../components/TxShared";
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -36,27 +37,13 @@ export default function AdminPage() {
     );
   }
 
-  // 역할 로딩 중
-  if (isLoading) {
-    return (
-      <PageLayout>
-        <div className="flex items-center justify-center py-24">
-          <span className="inline-block w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-          <span className="ml-3 text-sm text-gray-500">권한 확인 중...</span>
-        </div>
-      </PageLayout>
-    );
+  if (!isConnected || isLoading) {
+    return <PageLayout><PageConnectGuard isLoading={isLoading && isConnected} /></PageLayout>;
   }
 
   return (
     <PageLayout>
-      <div className="mb-6">
-        <h2 className="text-lg font-bold text-gray-900">역할 관리</h2>
-        <p className="text-xs text-gray-500 mt-0.5">
-          지갑 주소에 Mill / Fabricator / Integrator 역할을 등록·해제합니다
-        </p>
-      </div>
-
+      <TxPageHead title="역할 관리" en="grantRole / revokeRole" />
       <RoleManager />
     </PageLayout>
   );

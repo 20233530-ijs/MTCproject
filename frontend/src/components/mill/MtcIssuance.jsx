@@ -13,6 +13,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { ethers } from "ethers";
+import { FormCard, Field, TxtInput, ActionFooter, ConfirmModal } from "../TxShared";
 import { useContract } from "../../hooks/useContract";
 import { useWallet } from "../../hooks/useWallet";
 import { useTx } from "../../contexts/TxContext";
@@ -228,296 +229,135 @@ export default function MtcIssuance() {
   }
 
   return (
-    <div className="max-w-2xl space-y-5">
+    <div className="tx-wrap">
+      <div className="form-stack">
 
-      {/* ── ① 강재 기본 정보 ────────────────────────────────────────────────── */}
-      <div className="section-card">
-        <p className="section-title">
-          ① 강재 기본 정보{" "}
-          <span className="text-blue-600 normal-case">(블록체인 저장)</span>
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="label">
-              강재 ID <span className="text-gray-400 font-mono text-xs">(Heat No.)</span>
-            </label>
-            <input
-              type="text"
-              value={steelId}
-              onChange={(e) => setSteelId(e.target.value)}
-              placeholder="H_001"
-              className="input"
-              disabled={isSending}
-            />
-          </div>
-          <div>
-            <label className="label">
-              무게 <span className="text-gray-400 font-mono text-xs">(kg)</span>
-            </label>
-            <input
-              type="number"
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-              placeholder="1000.0"
-              step="0.1"
-              min="0.1"
-              className="input"
-              disabled={isSending}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="label">강재 등급</label>
-            <div className="flex gap-2">
-              <select
-                value={gradeSelect}
+        {/* ① 강재 기본 정보 */}
+        <FormCard step="①" title="강재 기본 정보" src="chain">
+          <Field label="강재 ID" en="Heat No." req hint="중복 여부는 컨트랙트가 최종 검증합니다.">
+            <TxtInput value={steelId} onChange={setSteelId} placeholder="H_001" disabled={isSending} />
+          </Field>
+          <Field label="무게" en="kg" req hint="소수점 1자리 · 내부적으로 g 단위로 변환 후 전송">
+            <TxtInput value={weight} onChange={setWeight} type="number" suffix="kg" placeholder="1000.0" disabled={isSending} />
+          </Field>
+          <Field label="강재 등급" en="Grade" hint="서버(KV) 저장">
+            <div className="select-or">
+              <select className="sel" value={gradeSelect}
                 onChange={(e) => { setGradeSelect(e.target.value); setGradeCustom(""); }}
-                className="input"
-                disabled={isSending || gradeCustom !== ""}
-              >
+                disabled={isSending || gradeCustom !== ""}>
                 <option value="">등급 선택</option>
-                {GRADE_OPTIONS.map((g) => (
-                  <option key={g} value={g}>{g}</option>
-                ))}
+                {GRADE_OPTIONS.map((g) => <option key={g} value={g}>{g}</option>)}
               </select>
-              <input
-                type="text"
-                value={gradeCustom}
-                onChange={(e) => { setGradeCustom(e.target.value); setGradeSelect(""); }}
-                placeholder="직접 입력"
-                className="input"
-                disabled={isSending}
-              />
+              <span className="or">또는</span>
+              <TxtInput value={gradeCustom} onChange={(v) => { setGradeCustom(v); setGradeSelect(""); }}
+                placeholder="직접 입력" disabled={isSending} mono={false} />
             </div>
-            {grade && (
-              <p className="text-xs text-green-600 mt-1">
-                선택된 등급: <span className="font-mono font-semibold">{grade}</span>
-              </p>
-            )}
+            {grade && <div className="fld-hint" style={{ color: "var(--status-active)" }}>선택된 등급: <b>{grade}</b></div>}
+          </Field>
+        </FormCard>
+
+        {/* ② 화학 성분 */}
+        <FormCard step="②" title="화학 성분 (%)" src="kv">
+          <div className="inline-fields">
+            {CHEM_FIELDS.map(({ key, label, placeholder }) => (
+              <div className="mini" key={key}>
+                <span className="ml">{label}</span>
+                <TxtInput value={chem[key]}
+                  onChange={(v) => setChem((prev) => ({ ...prev, [key]: v }))}
+                  type="number" placeholder={placeholder} disabled={isSending} />
+              </div>
+            ))}
           </div>
-        </div>
-      </div>
+          <div className="fld-hint" style={{ marginTop: 12 }}>소수점 3자리 · 블록체인 미기록 (진본성은 ④ PDF 해시로 보증)</div>
+        </FormCard>
 
-      {/* ── ② 화학 성분 ────────────────────────────────────────────────────── */}
-      <div className="section-card">
-        <p className="section-title">
-          ② 화학 성분 (%)
-          <span className="text-amber-600 normal-case ml-2 text-xs">
-            ※ 서버(KV) 저장 / 진본증명: PDF 해시
-          </span>
-        </p>
-        <div className="grid grid-cols-5 gap-3">
-          {CHEM_FIELDS.map(({ key, label, placeholder }) => (
-            <div key={key}>
-              <label className="label font-mono">{label}</label>
-              <input
-                type="number"
-                value={chem[key]}
-                onChange={(e) => setChem((prev) => ({ ...prev, [key]: e.target.value }))}
-                step="0.001"
-                placeholder={placeholder}
-                className="input text-center"
-                disabled={isSending}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── ③ 기계적 성질 ───────────────────────────────────────────────────── */}
-      <div className="section-card">
-        <p className="section-title">
-          ③ 기계적 성질
-          <span className="text-amber-600 normal-case ml-2 text-xs">
-            ※ 서버(KV) 저장 / 진본증명: PDF 해시
-          </span>
-        </p>
-        <div className="grid grid-cols-3 gap-3">
-          {MECH_FIELDS.map(({ key, label, unit, placeholder }) => (
-            <div key={key}>
-              <label className="label">
-                {label} <span className="font-mono text-xs">({unit})</span>
-              </label>
-              <input
-                type="number"
-                value={mech[key]}
-                onChange={(e) => setMech((prev) => ({ ...prev, [key]: e.target.value }))}
-                placeholder={placeholder}
-                className="input"
-                disabled={isSending}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── ④ PDF 업로드 ────────────────────────────────────────────────────── */}
-      <div className="section-card">
-        <p className="section-title">
-          ④ MTC PDF 업로드{" "}
-          <span className="text-blue-600 normal-case">(블록체인 해시 저장)</span>
-        </p>
-
-        {/* 파일 선택 영역 */}
-        <div
-          className={[
-            "border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition-colors",
-            uploadState === "done"
-              ? "border-green-400 bg-green-50"
-              : uploadState === "error"
-              ? "border-red-300 bg-red-50"
-              : "border-gray-200 hover:border-blue-300 hover:bg-blue-50",
-          ].join(" ")}
-          onClick={() => !isSending && fileInputRef.current?.click()}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf"
-            className="hidden"
-            onChange={handleFileChange}
-            disabled={isSending}
-          />
-          {uploadState === "idle" && (
-            <>
-              <p className="text-sm text-gray-500">
-                PDF 파일 선택 <span className="font-mono text-xs">(.pdf, 최대 10MB)</span>
-              </p>
-              <p className="text-xs text-gray-400 mt-1">클릭하여 파일 선택</p>
-            </>
-          )}
-          {uploadState === "uploading" && (
-            <p className="text-sm text-blue-600">
-              {pdfFile?.name} — 업로드 중...
-            </p>
-          )}
-          {uploadState === "done" && (
-            <p className="text-sm text-green-700 font-medium">
-              ✓ {pdfFile?.name}
-            </p>
-          )}
-          {uploadState === "error" && (
-            <p className="text-sm text-red-600">
-              ✗ {pdfFile?.name || "파일 선택"}
-            </p>
-          )}
-        </div>
-
-        {pdfError && (
-          <p className="field-error mt-2">{pdfError}</p>
-        )}
-
-        {/* 업로드 진행바 */}
-        {uploadState === "uploading" && (
-          <div className="mt-3">
-            <div className="flex justify-between text-xs text-gray-500 mb-1">
-              <span>IPFS 업로드 중...</span>
-              <span>{uploadProgress}%</span>
-            </div>
-            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-500 rounded-full transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
-              />
-            </div>
+        {/* ③ 기계적 성질 */}
+        <FormCard step="③" title="기계적 성질" src="kv">
+          <div className="inline-fields">
+            {MECH_FIELDS.map(({ key, label, unit, placeholder }) => (
+              <div className="mini" key={key}>
+                <span className="ml">{label}</span>
+                <TxtInput value={mech[key]}
+                  onChange={(v) => setMech((prev) => ({ ...prev, [key]: v }))}
+                  type="number" suffix={unit} placeholder={placeholder} disabled={isSending} />
+              </div>
+            ))}
           </div>
-        )}
+        </FormCard>
 
-        {/* CID · 해시 표시 */}
-        {uploadState === "done" && cid && (
-          <div className="mt-3 space-y-2 bg-gray-50 rounded-lg p-3 text-xs font-mono">
-            <div className="flex items-center gap-2">
-              <span className="text-gray-500 shrink-0 w-20">IPFS CID</span>
-              <span className="text-gray-800 truncate flex-1">{cid}</span>
-              <button
-                onClick={() => copyToClipboard(cid)}
-                className="text-blue-500 hover:text-blue-700 shrink-0"
-              >
-                [복사]
-              </button>
-              <a
-                href={`${IPFS_GATEWAY}/${cid}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:text-blue-700 shrink-0"
-              >
-                [↗]
-              </a>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-500 shrink-0 w-20">SHA-256</span>
-              <span className="text-gray-800 truncate flex-1">
-                {pdfHash.slice(0, 10)}…{pdfHash.slice(-8)}
+        {/* ④ PDF 업로드 */}
+        <FormCard step="④" title="MTC PDF 업로드" src="chain">
+          <input ref={fileInputRef} type="file" accept=".pdf" style={{ display: "none" }}
+            onChange={handleFileChange} disabled={isSending} />
+
+          {uploadState === "idle" || uploadState === "error" ? (
+            <div className={"file-drop" + (uploadState === "error" ? " has-file" : "")}
+                 onClick={() => !isSending && fileInputRef.current?.click()}>
+              <span className="fd-ico">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 16V4M12 4L7 9M12 4L17 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M4 16V18C4 19.1 4.9 20 6 20H18C19.1 20 20 19.1 20 18V16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                </svg>
               </span>
-              <button
-                onClick={() => copyToClipboard(pdfHash)}
-                className="text-blue-500 hover:text-blue-700 shrink-0"
-              >
-                [복사]
-              </button>
+              <span className="fd-main">PDF 파일 선택</span>
+              <span className="fd-sub">.pdf · 최대 10MB · 선택 즉시 SHA-256 계산 + IPFS 업로드</span>
+              {pdfError && <div className="fld-error" style={{ justifyContent: "center" }}>{pdfError}</div>}
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── 버튼 영역 ──────────────────────────────────────────────────────── */}
-      <div className="flex justify-between items-center">
-        <button
-          onClick={() => setResetConfirm(true)}
-          className="btn-ghost"
-          disabled={isSending}
-        >
-          초기화
-        </button>
-        <button
-          onClick={handleIssue}
-          disabled={!isFormComplete || isSending || !isConnected}
-          className="btn-blue min-w-[180px]"
-        >
-          {isSending ? (
-            <span className="flex items-center justify-center gap-2">
-              <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-              트랜잭션 전송 중...
-            </span>
           ) : (
-            "MetaMask로 발행 ✍"
+            <div className="file-drop has-file">
+              <div className="file-meta">
+                <span className="ficon">PDF</span>
+                <div>
+                  <div className="fn">{pdfFile?.name}</div>
+                  <div className="fsz">{pdfFile ? (pdfFile.size / 1024 / 1024).toFixed(1) + " MB" : ""}</div>
+                </div>
+                <button className="btn-add swap" onClick={() => handleReset()} disabled={isSending}>변경</button>
+              </div>
+              {uploadState === "uploading" && (
+                <div className="upload-progress">
+                  <div className="label"><span>IPFS 업로드 중 · Pinata</span><span>{uploadProgress}%</span></div>
+                  <div className="bar-track"><div className="bar-fill" style={{ width: uploadProgress + "%" }}></div></div>
+                </div>
+              )}
+              {uploadState === "done" && cid && (
+                <div className="kv-result">
+                  <div className="kv-row">
+                    <span className="k">IPFS CID</span>
+                    <span className="val">{cid.slice(0, 16)}…</span>
+                    <span className="acts">
+                      <button className="btn-add" onClick={() => copyToClipboard(cid)}>복사</button>
+                      <a className="btn-add" href={`${IPFS_GATEWAY}/${cid}`} target="_blank" rel="noopener noreferrer">열기 ↗</a>
+                    </span>
+                  </div>
+                  <div className="kv-row">
+                    <span className="k">SHA-256</span>
+                    <span className="val">{pdfHash.slice(0, 10)}…{pdfHash.slice(-8)}</span>
+                    <span className="acts"><button className="btn-add" onClick={() => copyToClipboard(pdfHash)}>복사</button></span>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
-        </button>
+        </FormCard>
+
+        <ActionFooter
+          canSubmit={isFormComplete && isConnected}
+          gateNote={!isConnected ? "지갑 연결 필요" : uploadState !== "done" ? "PDF 업로드 완료 후 활성화" : "필수 항목을 입력하세요"}
+          submitLabel="MetaMask로 발행"
+          onReset={() => setResetConfirm(true)}
+          onSubmit={handleIssue}
+          loading={isSending}
+        />
       </div>
 
-      {!isConnected && (
-        <p className="text-xs text-amber-600 text-center -mt-2">
-          MetaMask 연결 후 발행할 수 있습니다
-        </p>
-      )}
-
-      {/* ── 초기화 확인 모달 ─────────────────────────────────────────────── */}
       {resetConfirm && (
-        <div className="fixed inset-0 z-[8000] flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setResetConfirm(false)}
-          />
-          <div className="relative bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4">
-            <h3 className="text-base font-bold text-gray-900 mb-2">폼을 초기화하시겠습니까?</h3>
-            <p className="text-sm text-gray-600 mb-5">
-              입력된 모든 정보와 업로드된 PDF가 초기화됩니다.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setResetConfirm(false)}
-                className="btn-ghost flex-1"
-              >
-                취소
-              </button>
-              <button
-                onClick={() => handleReset()}
-                className="btn-blue flex-1"
-              >
-                초기화
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          title="폼을 초기화하시겠습니까?"
+          body="입력된 모든 정보와 업로드된 PDF가 초기화됩니다."
+          confirmLabel="초기화"
+          onConfirm={() => handleReset()}
+          onCancel={() => setResetConfirm(false)}
+        />
       )}
     </div>
   );

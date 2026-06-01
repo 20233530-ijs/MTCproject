@@ -9,6 +9,7 @@ import PageLayout from "../components/layout/PageLayout";
 import MtcIssuance from "../components/mill/MtcIssuance";
 import { useRole } from "../hooks/useRole";
 import { useWallet } from "../hooks/useWallet";
+import { TxPageHead, PageConnectGuard } from "../components/TxShared";
 
 export default function IssuePage() {
   const { isConnected } = useWallet();
@@ -25,51 +26,22 @@ export default function IssuePage() {
     }
   }, [hasAccess, isConnected, isLoading]);
 
-  if (!isConnected) {
-    return (
-      <PageLayout>
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <p className="text-gray-500 text-sm mb-1">MetaMask 연결이 필요합니다</p>
-          <p className="text-xs text-gray-400">Mill 또는 Admin 계정으로 연결 후 이용 가능합니다</p>
-        </div>
-      </PageLayout>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <PageLayout>
-        <div className="flex items-center justify-center py-24">
-          <span className="inline-block w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-          <span className="ml-3 text-sm text-gray-500">권한 확인 중...</span>
-        </div>
-      </PageLayout>
-    );
+  if (!isConnected || isLoading) {
+    return <PageLayout><PageConnectGuard isLoading={isLoading && isConnected} /></PageLayout>;
   }
 
   return (
     <PageLayout>
-      <div className="mb-6">
-        <h2 className="text-lg font-bold text-gray-900">MTC 발행</h2>
-        <p className="text-xs text-gray-500 mt-0.5">
-          강재 정보를 입력하고 PDF를 업로드하여 블록체인에 이력을 기록합니다
-        </p>
-      </div>
+      <TxPageHead title="MTC 발행" en="issueMtc" />
 
-      {/* Scenario 10-B: 권한 없는 지갑 경고 배너 (리다이렉트 대신 안내) */}
       {isConnected && !isLoading && !hasAccess && (
-        <div className="mb-4 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
-          <span className="text-amber-500 font-bold text-sm mt-0.5">⚠</span>
-          <div>
-            <p className="text-sm font-semibold text-amber-800">
-              Mill(제강사) 역할이 없습니다
-            </p>
-            <p className="text-xs text-amber-700 mt-0.5">
-              이 계정에는 MTC 발행 권한이 없습니다.
-              발행을 시도하면 컨트랙트에서 거부됩니다.
-              <span className="font-mono ml-1 text-[10px]">(Scenario 10-B 데모 확인용)</span>
-            </p>
-          </div>
+        <div className="warn-irreversible" style={{ marginBottom: 20 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M12 3L22 20H2L12 3Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+            <path d="M12 10V14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            <circle cx="12" cy="17" r="0.8" fill="currentColor"/>
+          </svg>
+          <span><b>Mill(제강사) 역할이 없습니다.</b> 발행을 시도하면 컨트랙트에서 거부됩니다 (Scenario 10-B).</span>
         </div>
       )}
 
