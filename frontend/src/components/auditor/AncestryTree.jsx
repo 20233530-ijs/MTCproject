@@ -15,11 +15,13 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import ReactFlow, {
   Background,
   Controls,
+  Handle,
+  Position,
   useNodesState,
   useEdgesState,
   MarkerType,
 } from "reactflow";
-import "reactflow/dist/style.css";
+// CSS는 main.jsx에서 전역 import (여기 중복 불필요)
 import { useContract } from "../../hooks/useContract";
 import { gramsToKg } from "../../utils/format";
 import { logQuery } from "../../utils/logger";
@@ -44,21 +46,26 @@ const V_GAP  = 130;
 function SteelNode({ data, selected }) {
   const s = STATUS_STYLE[data.status] ?? STATUS_STYLE[3];
   const c = STATUS_COLOR[data.status] ?? "#6b7280";
+  const handleStyle = { background: "transparent", border: "none", width: 8, height: 8 };
   return (
     <div style={{
-      border: selected ? `3px solid #3B82F6` : s.border,
+      border: selected ? "2px solid #3B82F6" : s.border,
       background: selected ? "#EFF6FF" : s.bg,
       borderRadius: "10px",
       padding: "10px 14px",
       width: `${NODE_W}px`,
       boxShadow: selected
         ? "0 0 0 3px rgba(59,130,246,0.25)"
-        : "0 1px 4px rgba(0,0,0,0.08)",
+        : "0 2px 6px rgba(0,0,0,0.08)",
       cursor: "pointer",
       boxSizing: "border-box",
       userSelect: "none",
+      position: "relative",
     }}>
-      {/* 연결 핸들은 ReactFlow가 nodeTypes에서 자동 처리 — Position.Top/Bottom 명시 불필요 */}
+      {/* 엣지 연결 핸들 — 보이지 않지만 React Flow 엣지 라우팅에 필수 */}
+      <Handle type="target" position={Position.Top}    style={handleStyle} />
+      <Handle type="source" position={Position.Bottom} style={handleStyle} />
+
       <p style={{
         fontFamily: "monospace", fontWeight: "bold", fontSize: "12px",
         color: "#111827", marginBottom: "3px",

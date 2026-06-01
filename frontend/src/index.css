@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── React Flow 핸들 닷(•) 숨기기 ──────────────────────────────────────── */
+.react-flow__handle {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+/* 엣지 경로가 노드 뒤에 숨지 않도록 z-index 보장 */
+.react-flow__edges { z-index: 1 !important; }
+.react-flow__edge-path { stroke-width: 1.5px; }
+
 /* ── 전역 기본값 ─────────────────────────────────────────────────────────── */
 @layer base {
   :root {
