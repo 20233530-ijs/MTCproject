@@ -47,7 +47,7 @@ export default function SearchPanel({ searchId, searchType, onSearch, isLoading 
             value="steel"
             checked={idType === "steel"}
             onChange={() => setIdType("steel")}
-            className="w-3.5 h-3.5 accent-blue-600"
+            className="w-3.5 h-3.5 accent-[#0a0a0b]"
           />
           강재 ID
         </label>
@@ -58,7 +58,7 @@ export default function SearchPanel({ searchId, searchType, onSearch, isLoading 
             value="product"
             checked={idType === "product"}
             onChange={() => setIdType("product")}
-            className="w-3.5 h-3.5 accent-blue-600"
+            className="w-3.5 h-3.5 accent-[#0a0a0b]"
           />
           부품 ID
         </label>

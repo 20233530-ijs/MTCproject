@@ -22,6 +22,11 @@
   --border-default:  #e1e2e5;
   --border-strong:   #c8cace;
   --border-focus:    #0a0a0b;
+  /* ── Primary (슬레이트 무채색) ── */
+  --primary:         #0a0a0b;
+  --primary-hover:   #1c1c1f;
+  --primary-pressed: #2a2a2d;
+  --primary-fg:      #ffffff;
   --status-active:      #16a34a;
   --status-active-bg:   #ecfdf3;
   --status-split:       #b45309;
@@ -85,10 +90,12 @@
   .btn-primary:hover { background: #1c1c1f; border-color: #1c1c1f; }
 
   .btn-blue {
-    @apply btn bg-role-mill text-white;
-    border-color: #1d4ed8;
+    @apply btn text-white;
+    background: var(--primary);
+    border-color: var(--primary);
   }
-  .btn-blue:hover { @apply bg-blue-700; }
+  .btn-blue:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+  .btn-blue:active { background: var(--primary-pressed); }
 
   .btn-ghost {
     @apply btn bg-transparent text-sm;
